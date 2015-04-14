@@ -17,9 +17,9 @@
                                         $mois = $uneFiche['mois'];
                                         $numAnnee = substr($mois, 0,4);
                                         $numMois = substr($mois, 4,2);
-                                        $mois=$numMois."/".$numAnnee;
+                                        $mois=$numAnnee.$numMois;
                                 ?>
-                                <option  value="<?php echo $idV?>"><?php echo $nomV ." ".$prenomV." - ". $mois ?></option>
+                                <option  value="<?php echo $idV?>:<?php echo $mois?>"><?php echo $nomV ." ".$prenomV." - ". $mois ?></option>
                                 <?php
                                 }
                                 ?>

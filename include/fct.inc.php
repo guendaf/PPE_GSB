@@ -1,36 +1,73 @@
 <?php
-
-
+/** 
+ * Fonctions pour l'application GSB
+ 
+ * @package default
+ * @author GUENDAF sofian
+ * @version    1.0
+ */
+ /**
+ * Teste si un quelconque visiteur est connecté
+ * @return vrai ou faux 
+ */
     function estConnecte(){
        return isset($_SESSION['id']);
     }
     
-    
+/**
+ * Enregistre dans une variable session les infos d'un visiteur
+ 
+ * @param $id 
+ * @param $nom
+ * @param $prenom
+ * @param $profession
+ */    
     function connecter($idVisiteur, $nom, $prenom, $fonction){
         $_SESSION['id'] = $idVisiteur;
         $_SESSION['nom'] = $nom;
         $_SESSION['prenom'] = $prenom;
         $_SESSION['fonction'] = $fonction;
     }
-    
+ 
+/**
+ * Enregistre dans une variable session les infos d'un visiteur
+ 
+ * @param $idVisiteur
+ * @param $mois
+ */
     function conserverId($idVisiteur,$mois){
 	$_SESSION['idVisiteur']= $idVisiteur; 
         $_SESSION['mois']= $mois;
     }
-    
+
+/**
+ * Détruit la session active
+ */    
     function ajouterErreur($msg){
         if (! isset($_REQUEST['erreurs'])){
         $_REQUEST['erreurs']=array();
 	} 
         $_REQUEST['erreurs'][]=$msg;
     }
-    
+
+/**
+ * Transforme une date au format format anglais aaaa-mm-jj vers le format français jj/mm/aaaa 
+ 
+ * @param $madate au format  aaaa-mm-jj
+ * @return la date au format format français jj/mm/aaaa
+*/
     function dateAnglaisVersFrancais($maDate){
         @list($annee,$mois,$jour)=explode('-',$maDate);
         $date="$jour"."/".$mois."/".$annee;
     return $date;
     }
-    
+
+/**
+ * retourne le mois au format aaaamm selon le jour dans le mois
+ 
+ * @param $date au format  jj/mm/aaaa
+ * @return le mois au format aaaamm
+*/
     function getMois($date){
 		@list($jour,$mois,$annee) = explode('/',$date);
 		if(strlen($mois) == 1){
@@ -38,12 +75,25 @@
 		}
 		return $annee.$mois;
     }
-
+    
+/* gestion des erreurs*/
+/**
+ * Indique si une valeur est un entier positif ou nul
+ 
+ * @param $valeur
+ * @return vrai ou faux
+*/
     function estEntierPositif($valeur) {
 	return preg_match("/[^0-9]/", $valeur) == 0;
 	
 }
 
+/**
+ * Indique si un tableau de valeurs est constitué d'entiers positifs ou nuls
+ 
+ * @param $tabEntiers : le tableau
+ * @return vrai ou faux
+*/
     function estTableauEntiers($tabEntiers) {
 	$ok = true;
 	foreach($tabEntiers as $unEntier){
@@ -53,16 +103,33 @@
 	}
 	return $ok;
     }
-    
+
+/**
+ * Vérifie que le tableau de frais ne contient que des valeurs numériques 
+ 
+ * @param $lesFrais 
+ * @return vrai ou faux
+*/    
     function lesQteFraisValides($lesFrais){
             return estTableauEntiers($lesFrais);
     }
-    
+
+/**
+ * Transforme une date au format français jj/mm/aaaa vers le format anglais aaaa-mm-jj
+ 
+ * @param $madate au format  jj/mm/aaaa
+ * @return la date au format anglais aaaa-mm-jj
+*/    
     function dateFrancaisVersAnglais($maDate){
 	@list($jour,$mois,$annee) = explode('/',$maDate);
 	return date('Y-m-d',mktime(0,0,0,$mois,$jour,$annee));
     }
-    
+
+/**
+ * Retoune le nombre de lignes du tableau des erreurs 
+ 
+ * @return le nombre d'erreurs
+ */    
     function nbErreurs(){
     if (!isset($_REQUEST['erreurs'])){
 	   return 0;
@@ -72,6 +139,15 @@
 	}
     }
 
+/**
+ * Vérifie la validité des trois arguments : la date, le libellé du frais et le montant 
+ 
+ * des message d'erreurs sont ajoutés au tableau des erreurs
+ 
+ * @param $dateFrais 
+ * @param $libelle 
+ * @param $montant
+ */    
     function valideInfosFrais($dateFrais,$libelle,$montant){
 	if($dateFrais==""){
 		ajouterErreur("Le champ date ne doit pas être vide");
@@ -98,6 +174,12 @@
 		}
 }
 
+/**
+ * Vérifie la validité du format d'une date française jj/mm/aaaa 
+ 
+ * @param $date 
+ * @return vrai ou faux
+*/
 function estDateValide($date){
 	$tabDate = explode('/',$date);
 	$dateOK = true;
@@ -117,6 +199,12 @@ function estDateValide($date){
 	return $dateOK;
 }
 
+/**
+ * Vérifie si une date est inférieure d'un an à la date actuelle
+ 
+ * @param $dateTestee 
+ * @return vrai ou faux
+*/
 function estDateDepassee($dateTestee){
 	$dateActuelle=date("d/m/Y");
 	@list($jour,$mois,$annee) = explode('/',$dateActuelle);
@@ -126,10 +214,19 @@ function estDateDepassee($dateTestee){
 	return ($anneeTeste.$moisTeste.$jourTeste < $AnPasse); 
 }
 
+/**
+ * Indique le type d'erreur
+ * @param type $string
+ */
 function alert($string){
         echo '<script type="text/javascript">alert("' . $string . '");</script>';
 }
 
+/**
+ * Retourne le mois suivant sous forme aaaamm
+ * @param type $mois
+ * @return string
+ */
 function moisSuivant($mois){
      $numMois=  substr($mois, 4,2);
      $numAnne= substr($mois, 0,4);
@@ -146,7 +243,12 @@ function moisSuivant($mois){
      $moisSuivant = $numAnne.$numMois;
      return $moisSuivant;
      }
-     
+
+/**
+ * Tronque le libelle hors fofait à partir de 30 caractères
+ * @param type $libelle
+ * @return string
+ */
 function tronquerTexte($libelle){
      $lgMax = 30;
      if (strlen($libelle) > $lgMax)

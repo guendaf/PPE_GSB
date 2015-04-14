@@ -1,7 +1,6 @@
 <?php
 require_once("include/fct.inc.php");
 require_once("include/class.pdoppe.inc.php");
-require_once('fpdf.php');
 include("vue/v_entete.php");
 session_start();
 $pdo = PdoPPE::getPdoPPE();

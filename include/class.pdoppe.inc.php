@@ -236,9 +236,9 @@ class PdoPPE{
 	}
 
 /**
- * 
- * @param type $idVisiteur
- * @param type $mois
+ * Crée une nouvelle fiche de frais et les lignes de frais au forfait pour un visiteur et ce pour le mois suivant
+ * @param $idVisiteur
+ * @param $mois
  */        
         public function creeNouvelleFiche($idVisiteur, $mois){
                 $moisSuivant=moisSuivant($mois);
@@ -255,6 +255,12 @@ class PdoPPE{
                 
 	}
         
+/**
+ * Test si une fiche de frais du mois suivant existe
+ * @param $idVisiteur
+ * @param $moisSuivant
+ * @return vrai ou faux
+ */ 
         public function ficheFraisExist($idVisiteur,$moisSuivant){
 		$ok = false;
 		$req = "select count(*) as nblignesfrais from fichefrais 
@@ -267,26 +273,56 @@ class PdoPPE{
 		return $ok;
 	}
         
+/**
+ * Ajoute les frais hors forfait refusé du mois courant d'un visiteur dans la table des frais hors forfait du mois suivant
+ * @param type $idVisiteur
+ * @param type $moisSuivant
+ * @param type $libelle
+ * @param type $dateHF
+ * @param type $montantHF
+ */
         public function ajouterFraisHorsForfaitMoisSuivant($idVisiteur,$moisSuivant,$libelle,$dateHF,$montantHF){
 		$dateFr = dateFrancaisVersAnglais($dateHF);
 		$req = "insert into lignefraishorsforfait 
 		values('','$idVisiteur','$moisSuivant','REFUSE : $libelle','$dateFr','$montantHF')";
 		PdoPPE::$monPdo->exec($req);
         }
-        
+
+/**
+ * Retourne tous les id de la table FraisForfait
+ * @return un tableau associatif 
+ */
         public function getLesIdFrais(){
 		$req = "select fraisforfait.id as idfrais from fraisforfait order by fraisforfait.id";
 		$res = PdoPPE::$monPdo->query($req);
 		$lesLignes = $res->fetchAll();
 		return $lesLignes;
 	}
-        
+
+/**
+ * Modifie l'état et la date de modification d'une fiche de frais
+ 
+ * Modifie le champ idEtat et met la date de modif à aujourd'hui
+ * @param type $idVisiteur
+ * @param type $mois
+ * @param type $etat
+ */
         public function majEtatFicheFrais($idVisiteur,$mois,$etat){
 		$req = "update ficheFrais set idEtat = '$etat', dateModif = now() 
 		where fichefrais.idvisiteur ='$idVisiteur' and fichefrais.mois = '$mois'";
 		PdoPPE::$monPdo->exec($req);
 	}
-        
+
+/**
+ *Met à jour la table ligneFraisForfait
+ 
+ * Met à jour la table ligneFraisForfait pour un visiteur et
+ * un mois donné en enregistrant les nouveaux montants
+ * 
+ * @param type $idVisiteur
+ * @param type $mois
+ * @param type $lesFrais
+ */
         public function majFraisForfait($idVisiteur, $mois, $lesFrais){
 		$lesCles = array_keys($lesFrais);
 		foreach($lesCles as $unIdFrais){
@@ -297,39 +333,78 @@ class PdoPPE{
 			PdoPPE::$monPdo->exec($req);
 		}
 	}
-        
+
+/**
+ * Supprime le frais hors forfait dont l'id est passé en argument
+ * @param type $idFrais
+ */
         public function supprimerFraisHorsForfait($idFrais){
 		$req = "delete from lignefraishorsforfait where lignefraishorsforfait.id =$idFrais ";
 		PdoPPE::$monPdo->exec($req);
 	}
-        
+
+/**
+ * Crée un nouveau frais hors forfait pour un visiteur et un mois donné
+ * à partir des informations fournies en paramètre
+ * @param type $idVisiteur
+ * @param type $mois
+ * @param type $libelle
+ * @param type $date
+ * @param type $montant
+ */
         public function creeNouveauFraisHorsForfait($idVisiteur,$mois,$libelle,$date,$montant){
 		$dateFr = dateFrancaisVersAnglais($date);
 		$req = "insert into lignefraishorsforfait 
 		values('','$idVisiteur','$mois','$libelle','$dateFr','$montant')";
 		PdoPPE::$monPdo->exec($req);
 	}
+        
+/**
+ * retourne une liste de tous les inscrits sauf les comtables
+ * @return un tableau associatif
+ */
         public function getLesVisiteurs() {
               $req="select visiteur.id as idVisiteur, visiteur.nom as nom, visiteur.prenom as prenom from visiteur where profession != 'comptable'";
               $res= PdoPPE::$monPdo->query($req);
               $lesLignes = $res->fetchAll();
               return $lesLignes;
         }
-        
+
+/**
+ * Met à jour la fiche de frais d'un visiteur pour un mois donné en modifiant 
+ * le libellé d'un frais hors forfait passé en paramètre en ajoutant 
+ * 'REFUSE :' en debut de texte 
+ 
+ * @param type $idVisiteur
+ * @param type $mois
+ * @param type $idFrais
+ * @param type $libelle
+ */
         public function refuseFraisHorsForfait($idVisiteur,$mois, $idFrais, $libelle){
 		$req = "update lignefraishorsforfait set lignefraishorsforfait.libelle = 'REFUSE : $libelle'
 		where lignefraishorsforfait.idvisiteur ='$idVisiteur' and lignefraishorsforfait.mois = '$mois' and lignefraishorsforfait.id = '$idFrais'";
 		PdoPPE::$monPdo->exec($req);
 	}
-        
+
+ /**
+  * Valide une fiche de frais
+  
+  * L'id de l'état passe à 'CL' et la dateModif devient la date actuel 
+  * @param type $idVisiteur
+  * @param type $mois
+  */
         public function validerFicheFrais($idVisiteur,$mois){
 		$req = "update ficheFrais set ficheFrais.idEtat = 'CL', ficheFrais.dateModif = now() 
 		where ficheFrais.idvisiteur ='$idVisiteur' and ficheFrais.mois = '$mois'";
 		PdoPPE::$monPdo->exec($req);
 	}
-        
+
+/**
+ * 
+ * @return type
+ */
         public function getFichesVisiteurs(){
-            $req = "select ficheFrais.idVisiteur as idVisiteur, ficheFrais.mois as mois , ficheFrais.idEtat, visiteur.nom as nomV, visiteur.prenom as prenomV
+            $req = "select ficheFrais.idVisiteur as idVisiteur, ficheFrais.mois as mois, ficheFrais.idEtat, visiteur.nom as nomV, visiteur.prenom as prenomV
                    from ficheFrais join visiteur on ficheFrais.idVisiteur = visiteur.id
                    where idEtat = 'CL'
                    order by mois desc ";
@@ -337,22 +412,19 @@ class PdoPPE{
             $lesLignes = $res->fetchAll();
             return $lesLignes;
         }
-        
-        public function getFicheVisiteur($idVisiteur, $mois){
-            $req = "select ficheFrais.idVisiteur as idVisiteur, ficheFrais.mois as mois , ficheFrais.nbJustificatifs as nb , ficheFrais.montantValide as montantV, ficheFrais.dateModif, ficheFrais.idEtat, visiteur.nom as nomV, visiteur.prenom as prenomV
-                   from ficheFrais join visiteur on ficheFrais.idVisiteur = visiteur.id
-                   where idEtat = 'CL' and idVisiteur = $idVisiteur and mois = $mois";
-            $res = PdoPPE::$monPdo->query($req);
-            $laLigne = $res->fetch();
-            return $laLigne;
-        }
-        
-        public function getLesFichesVisiteur($idVisiteur, $mois){
+
+/**
+ * retourne les informations d'une fiche pour un visiteur et un mois donné dont l'id de l'état est 'CL'
+ * @param $idVisiteur
+ * @param $mois
+ * @return un tableau associatif
+ */
+        public function getLaFicheVisiteur($idVisiteur, $mois){
 		$req = "select ficheFrais.idVisiteur as idVisiteur, ficheFrais.mois as mois , 
-                    ficheFrais.nbJustificatifs as nb , ficheFrais.montantValide as montantV, 
-                    ficheFrais.dateModif, ficheFrais.idEtat
-                    from ficheFrais
-                    where idVisiteur = $idVisiteur and mois = $mois and idEtat = 'CL'";
+                    ficheFrais.nbJustificatifs as nb, ficheFrais.MontantValide as montant,
+                    ficheFrais.dateModif as dateModif, ficheFrais.idEtat as idEtat, etat.libelle as libelle
+                   from ficheFrais join etat on ficheFrais.idEtat = etat.id
+                   where idVisiteur = '$idVisiteur' and mois ='$mois' and idEtat = 'CL'";
 		$res = PdoPPE::$monPdo->query($req);
 		$laLigne = $res->fetch();
 		
